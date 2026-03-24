@@ -11,7 +11,8 @@ pipeline {
         // Credentials
         DOCKERHUB_CRED = credentials('dockerCredentials')
         DOCKER_API_VERSION = '1.43'
-        DOCKER_BUILDKIT = '0'
+        //DOCKER_BUILDKIT = '0'
+        COMPOSE_API_VERSION = '1.43'
     }
     stages {
         stage('Git Clone') {
