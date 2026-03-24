@@ -28,7 +28,7 @@ pipeline {
             steps {
                 echo 'Docker Image Create'
                 sh '''
-                    docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                    docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} .
                     docker tag ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} wonji1227/${Docker_IMAGE_NAME}:latest
                 '''
             }
