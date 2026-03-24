@@ -9,7 +9,7 @@ pipeline {
         // 환경변수 지정
         DOCKER_IMAGE_NAME = "spring-petclinic"
         // Credentials
-        // DOCKERHUB_CRED = credentials('dockerCredentials')
+        DOCKERHUB_CRED = credentials('dockerCredentials')
     }
     stages {
         stage('Git Clone') {
@@ -29,19 +29,31 @@ pipeline {
                 echo 'Docker Image Create'
                 sh '''
                     docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
-                    docker tag ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} jiwonjung8292/${Docker_IMAGE_NAME}:latest
+                    docker tag ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} wonji1227/${Docker_IMAGE_NAME}:latest
                 '''
             }
         }
         stage('Docker Hub Login') {
             steps {
                 echo 'Docker Hub Login'
+                sh 'echo ${DOCKERHUB_CRED_PSW} | docker login -u ${DOCKERHUB_CRED_USR} --password-stdin'
             }
         }
         stage('Docker Image Push') {
             steps {
                 echo 'Docker Image Push'
+                sh '''
+                docker push wonji1227/${DOCKER_IMAGE_NAME}:latest
+                '''
             }
+            post {
+                always {
+                    sh '''
+                    docker rmi -f ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER}
+                    docker rmi -f wonji1227/${DOCKER_IMAGE_NAME}:latest
+                    '''
+                }
+            }    
         }
         stage('Docker Container Run') {
             steps {
