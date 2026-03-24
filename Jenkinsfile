@@ -27,28 +27,17 @@ pipeline {
                 sh 'mvn clean package -Dmaven.test.failure.ignore=true'
             }
         }
-        stage('Docker Image Create') {
+        stage('Docker Build && Push') {
             steps {
-                echo 'Docker Image Create'
                 sh '''
                     docker build -t ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} .
                     docker tag ${DOCKER_IMAGE_NAME}:${BUILD_NUMBER} wonji1227/${DOCKER_IMAGE_NAME}:latest
+                    echo ${DOCKERHUB_CRED_PSW} | docker login -u ${DOCKERHUB_CRED_USR} --password-stdin
+                    docker push wonji1227/${DOCKER_IMAGE_NAME}:latest
                 '''
             }
-        }
-        stage('Docker Hub Login') {
-            steps {
-                echo 'Docker Hub Login'
-                sh 'echo ${DOCKERHUB_CRED_PSW} | docker login -u ${DOCKERHUB_CRED_USR} --password-stdin'
-            }
-        }
-        stage('Docker Image Push') {
-            steps {
-                echo 'Docker Image Push'
-                sh '''
-                docker push wonji1227/${DOCKER_IMAGE_NAME}:latest
-                '''
-            }
+        
+        
             post {
                 always {
                     sh '''
@@ -61,6 +50,25 @@ pipeline {
         stage('Docker Container Run') {
             steps {
                 echo 'Docker Container Run'
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'target',
+                transfers: [sshTransfer(cleanRemote: false,
+                excludes: '',
+                execCommand: '''
+                docker rm -f $(docker ps -aq)
+                docker rmi -f $(docker images -q)
+                docker run -itd -p 80:8080 --name spring-petclinic wonji1227/spring-petclinic:latest''',
+                execTimeout: 120000,
+                flatten: false,
+                makeEmptyDirs: false,
+                noDefaultExcludes: false,
+                patternSeparator: '[, ]+',
+                remoteDirectory: '',
+                remoteDirectorySDF: false,
+                removePrefix: 'target',
+                sourceFiles: '')],
+                usePromotionTimestamp: false,
+                useWorkspaceInPromotion: false,
+                verbose: false)])
             }
         }
 
